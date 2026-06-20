@@ -19,6 +19,7 @@ export function RichEditor({ content, onChange, editable = true }: RichEditorPro
     ],
     content: content || "",
     editable,
+    immediatelyRender: false,
     onUpdate({ editor }) {
       onChange(editor.getHTML());
     },

@@ -1,10 +1,15 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/hooks/use-role";
 import { RichEditor } from "@/components/rich-editor";
-import { PdfViewer } from "@/components/pdf-viewer";
+
+const PdfViewer = dynamic(
+  () => import("@/components/pdf-viewer").then((m) => m.PdfViewer),
+  { ssr: false, loading: () => <div className="p-4 text-sm text-gray-400">Loading PDF…</div> }
+);
 import { StatusBadge } from "@/components/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
