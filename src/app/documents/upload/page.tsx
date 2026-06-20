@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRole } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, ArrowLeft } from "lucide-react";
+import { Upload, ArrowLeft, ShieldOff } from "lucide-react";
 import Link from "next/link";
 
 export default function UploadPage() {
   const router = useRouter();
+  const { role } = useRole();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,6 +39,17 @@ export default function UploadPage() {
 
     const doc = await res.json();
     router.push(`/documents/${doc.id}`);
+  }
+
+  if (role === "approver") {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 text-center">
+        <ShieldOff className="h-10 w-10 mx-auto text-gray-300 mb-3" />
+        <h2 className="text-lg font-semibold text-gray-700 mb-1">Access restricted</h2>
+        <p className="text-sm text-gray-500 mb-4">Approvers cannot upload documents.</p>
+        <Link href="/" className="text-sm text-blue-600 hover:underline">Back to documents</Link>
+      </div>
+    );
   }
 
   return (

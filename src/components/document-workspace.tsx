@@ -200,7 +200,7 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
                   {doc.status === "draft" || doc.status === "rejected" ? (
                     <Button size="sm" onClick={submitForReview} disabled={submitting} className="gap-1.5">
                       <Send className="h-3.5 w-3.5" />
-                      {submitting ? "Submitting…" : "Submit for Review"}
+                      {submitting ? "Submitting…" : "Submit for Approval"}
                     </Button>
                   ) : null}
                 </div>

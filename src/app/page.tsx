@@ -2,8 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/status-badge";
 import { DeleteButton } from "@/components/delete-button";
-import { Button } from "@/components/ui/button";
-import { Upload, FileText } from "lucide-react";
+import { UploadButton } from "@/components/upload-button";
+import { FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +17,7 @@ export default async function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-        <Link href="/documents/upload">
-          <Button className="gap-2">
-            <Upload className="h-4 w-4" />
-            Upload Document
-          </Button>
-        </Link>
+        <UploadButton />
       </div>
 
       {documents.length === 0 ? (
