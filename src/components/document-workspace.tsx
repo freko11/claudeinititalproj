@@ -197,12 +197,16 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
                   <Button size="sm" variant="outline" onClick={saveDraft} disabled={saving}>
                     {saving ? "Saving…" : "Save Draft"}
                   </Button>
-                  {doc.status === "draft" || doc.status === "rejected" ? (
+                  {doc.status !== "approved" && (
                     <Button size="sm" onClick={submitForReview} disabled={submitting} className="gap-1.5">
                       <Send className="h-3.5 w-3.5" />
-                      {submitting ? "Submitting…" : "Submit for Approval"}
+                      {submitting
+                        ? "Submitting…"
+                        : doc.status === "pending_review"
+                        ? "Resubmit for Approval"
+                        : "Submit for Approval"}
                     </Button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             )}
