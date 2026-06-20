@@ -186,11 +186,11 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
                 <RichEditor
                   content={content}
                   onChange={setContent}
-                  editable={role === "user" && doc.status !== "approved"}
+                  editable={role === "user" && doc.status === "draft"}
                 />
               </div>
             </div>
-            {role === "user" && doc.status !== "approved" && (
+            {role === "user" && doc.status === "draft" && (
               <div className="border-t bg-white px-4 py-3 space-y-2">
                 <input
                   className="w-full text-sm border rounded px-3 py-1.5 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
@@ -202,17 +202,16 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
                   <Button size="sm" variant="outline" onClick={saveDraft} disabled={saving}>
                     {saving ? "Saving…" : "Save Draft"}
                   </Button>
-                  {doc.status !== "approved" && (
-                    <Button size="sm" onClick={submitForReview} disabled={submitting} className="gap-1.5">
-                      <Send className="h-3.5 w-3.5" />
-                      {submitting
-                        ? "Submitting…"
-                        : doc.status === "pending_review"
-                        ? "Resubmit for Approval"
-                        : "Submit for Approval"}
-                    </Button>
-                  )}
+                  <Button size="sm" onClick={submitForReview} disabled={submitting} className="gap-1.5">
+                    <Send className="h-3.5 w-3.5" />
+                    {submitting ? "Submitting…" : "Submit for Approval"}
+                  </Button>
                 </div>
+              </div>
+            )}
+            {role === "user" && doc.status === "pending_review" && (
+              <div className="border-t bg-yellow-50 px-4 py-2 text-sm text-yellow-700 font-medium">
+                This document is under review — editing is locked.
               </div>
             )}
             {doc.status === "approved" && (
