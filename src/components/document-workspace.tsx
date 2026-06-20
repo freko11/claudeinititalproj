@@ -130,7 +130,7 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
   const unresolvedCount = comments.filter((c) => !c.resolved).length;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-full">
       {/* Left: original file viewer */}
       <div className="w-1/2 border-r bg-gray-100 overflow-hidden flex flex-col">
         <div className="px-4 py-2 bg-white border-b text-xs text-gray-500 font-medium flex items-center justify-between">
