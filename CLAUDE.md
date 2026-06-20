@@ -50,10 +50,13 @@ git push
 ### Document status lifecycle
 
 `draft` → `pending_review` → `approved` | `rejected`
+                ↓ (recall)
+             `draft`
 
 - Users submit via `PATCH /api/documents/:id` `{status:"pending_review"}`.
+- Users can recall a document under review via `PATCH /api/documents/:id` `{status:"draft"}`, unlocking it for further edits.
 - Approvers approve/reject via `POST /api/documents/:id/approvals`, which also updates `Document.status`.
-- Editing in the TipTap editor is locked when `status === "approved"`.
+- Editing in the TipTap editor is locked unless `role === "user"` and `status === "draft"`. Both `pending_review` and `approved` show a locked editor with a status banner.
 
 ### Role system
 
