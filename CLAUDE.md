@@ -17,6 +17,10 @@ npx prisma studio                      # open browser GUI for the SQLite databas
 
 No test suite exists yet.
 
+## Keeping this file current
+
+Update this file whenever you make changes that affect how a future Claude instance would need to understand or work in this repo — new routes, schema changes, new components, changed conventions, added dependencies, etc. Do this in the same commit as the code change so the two never drift apart.
+
 ## Git workflow
 
 After completing any meaningful unit of work, commit and push to GitHub so progress is never lost:
@@ -68,9 +72,9 @@ There is no authentication. Role (`"user"` | `"approver"`) is stored in `localSt
 
 mammoth.js runs **server-side** in the upload route (`src/app/api/documents/upload/route.ts`) to extract plain text into `Document.content` at upload time. The original file is kept for display. PDFs get an empty `content` field; users type the working copy into the TipTap editor manually.
 
-### Node.js version constraint
+### Node.js version
 
-Prisma 5 and several dependencies were pinned because Node.js **20.10.0** is installed. Prisma 7+ requires Node ≥ 20.19. Upgrade Node before bumping major dependency versions.
+Running Node.js **24**. Prisma 5 is still in use (was pinned when Node was 20.10); it can be upgraded to Prisma 7 at any time now that the Node constraint is gone.
 
 ### Tailwind / shadcn
 
