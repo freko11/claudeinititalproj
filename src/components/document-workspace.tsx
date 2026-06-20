@@ -90,6 +90,18 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
     router.refresh();
   }, [doc.id, router]);
 
+  const [recalling, setRecalling] = useState(false);
+  const recallForAmendment = useCallback(async () => {
+    setRecalling(true);
+    await fetch(`/api/documents/${doc.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "draft" }),
+    });
+    setRecalling(false);
+    router.refresh();
+  }, [doc.id, router]);
+
   const postComment = useCallback(async () => {
     if (!commentBody.trim()) return;
     setPostingComment(true);
@@ -210,8 +222,13 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
               </div>
             )}
             {role === "user" && doc.status === "pending_review" && (
-              <div className="border-t bg-yellow-50 px-4 py-2 text-sm text-yellow-700 font-medium">
-                This document is under review — editing is locked.
+              <div className="border-t bg-yellow-50 px-4 py-3 flex items-center justify-between gap-3">
+                <span className="text-sm text-yellow-700 font-medium">
+                  This document is under review — editing is locked.
+                </span>
+                <Button size="sm" variant="outline" onClick={recallForAmendment} disabled={recalling} className="shrink-0 border-yellow-400 text-yellow-700 hover:bg-yellow-100">
+                  {recalling ? "Recalling…" : "Recall for Amendment"}
+                </Button>
               </div>
             )}
             {doc.status === "approved" && (
