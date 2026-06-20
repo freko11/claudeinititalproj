@@ -1,0 +1,77 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+```bash
+npm run dev          # start dev server (Turbopack) at http://localhost:3000
+npm run build        # production build
+npm run lint         # ESLint
+npx tsc --noEmit     # type-check without emitting
+
+npx prisma migrate dev --name <name>   # create and apply a new migration
+npx prisma generate                    # regenerate Prisma Client after schema changes
+npx prisma studio                      # open browser GUI for the SQLite database
+```
+
+No test suite exists yet.
+
+## Git workflow
+
+After completing any meaningful unit of work, commit and push to GitHub so progress is never lost:
+
+```bash
+git add <specific files>
+git commit -m "short imperative summary"
+git push
+```
+
+- Commit after each logical step (feature added, bug fixed, schema changed, etc.) — not just at the end of a session.
+- Stage specific files rather than `git add .` to avoid committing `.env`, `uploads/`, or `prisma/dev.db`.
+- Keep commit messages in the imperative mood and scoped to what changed (e.g. `add comment resolve API`, `fix TipTap setContent type error`).
+- Always push after committing — the remote on GitHub is the source of truth for persisted work.
+
+## Architecture
+
+**Full-stack Next.js 16 app** (App Router) with server components fetching data directly via Prisma, and client components for interactive UI. No separate backend.
+
+### Data flow
+
+- **Server pages** (`src/app/**/page.tsx`) query Prisma directly and pass serialised data as props to client components. Pages use `export const dynamic = "force-dynamic"` to prevent caching.
+- **API routes** (`src/app/api/**`) handle all mutations (upload, PATCH, DELETE, POST). Client components call these via `fetch`.
+- **Database**: SQLite via Prisma 5 (`prisma/dev.db`). Schema in `prisma/schema.prisma`. Singleton client in `src/lib/prisma.ts` (globalThis pattern for dev hot-reload safety).
+- **Uploaded files** are stored on disk in `/uploads/` (gitignored). The filename stored in `Document.filePath` is `${timestamp}-${originalName}`. Files are served back through `/api/files/[filename]`.
+
+### Document status lifecycle
+
+`draft` → `pending_review` → `approved` | `rejected`
+
+- Users submit via `PATCH /api/documents/:id` `{status:"pending_review"}`.
+- Approvers approve/reject via `POST /api/documents/:id/approvals`, which also updates `Document.status`.
+- Editing in the TipTap editor is locked when `status === "approved"`.
+
+### Role system
+
+There is no authentication. Role (`"user"` | `"approver"`) is stored in `localStorage` under the key `docflow-role` and toggled via the navbar. The `useRole()` hook (`src/hooks/use-role.ts`) is the single source of truth. Client components import this hook to gate UI (delete button, comment input, approval panel).
+
+### Key components
+
+| Component | Purpose |
+|---|---|
+| `DocumentWorkspace` | Main client component for `/documents/[id]`. Holds editor state, comment list, and all mutation handlers. |
+| `RichEditor` | TipTap wrapper — requires `'use client'`. Outputs HTML string via `onChange`. |
+| `PdfViewer` | `react-pdf` wrapper. Sets up the pdf.js worker via `pdfjs.GlobalWorkerOptions.workerSrc`. |
+| `useRole` | localStorage-backed hook; always initialises as `"user"` on first render to avoid SSR hydration mismatch. |
+
+### DOCX handling
+
+mammoth.js runs **server-side** in the upload route (`src/app/api/documents/upload/route.ts`) to extract plain text into `Document.content` at upload time. The original file is kept for display. PDFs get an empty `content` field; users type the working copy into the TipTap editor manually.
+
+### Node.js version constraint
+
+Prisma 5 and several dependencies were pinned because Node.js **20.10.0** is installed. Prisma 7+ requires Node ≥ 20.19. Upgrade Node before bumping major dependency versions.
+
+### Tailwind / shadcn
+
+Tailwind v4 — no `tailwind.config.js`; theme tokens live in `src/app/globals.css` via `@theme`. shadcn components are in `src/components/ui/` and are plain files (not a package), safe to edit directly.

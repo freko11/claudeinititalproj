@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  title     String
+  fileName  String
+  filePath  String
+  fileType  String
+  content   String   @default("")
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions  Version[]
+  comments  Comment[]
+  approvals Approval[]
+}
+
+model Version {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String
+  changeNote String?
+  role       String   @default("user")
+  createdAt  DateTime @default(now())
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  body       String
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Approval {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  status     String
+  comment    String?
+  createdAt  DateTime @default(now())
+}
