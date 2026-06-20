@@ -66,14 +66,13 @@ There is no authentication. Role (`"user"` | `"approver"`) is stored in `localSt
 
 | Component | Purpose |
 |---|---|
-| `DocumentWorkspace` | Main client component for `/documents/[id]`. Holds editor state, comment list, and all mutation handlers. |
+| `DocumentWorkspace` | Main client component for `/documents/[id]`. Single-view layout: full-width inline editor with a toolbar (title, status, Save/Submit actions) and a collapsible right sidebar (Comments, History, Approval tabs). |
 | `RichEditor` | TipTap wrapper — requires `'use client'`. Outputs HTML string via `onChange`. |
-| `PdfViewer` | `react-pdf` wrapper. Sets up the pdf.js worker via `pdfjs.GlobalWorkerOptions.workerSrc`. |
 | `useRole` | localStorage-backed hook; always initialises as `"user"` on first render to avoid SSR hydration mismatch. |
 
 ### DOCX handling
 
-mammoth.js runs **server-side** in the upload route (`src/app/api/documents/upload/route.ts`) to extract plain text into `Document.content` at upload time. The original file is kept for display. PDFs get an empty `content` field; users type the working copy into the TipTap editor manually.
+mammoth.js runs **server-side** in the upload route (`src/app/api/documents/upload/route.ts`) to extract plain text into `Document.content` at upload time. The original file is stored on disk but is no longer shown in the document workspace (the split-panel viewer was removed). PDFs get an empty `content` field; users type the working copy into the TipTap editor manually.
 
 ### Node.js version
 
