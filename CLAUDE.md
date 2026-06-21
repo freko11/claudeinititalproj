@@ -13,6 +13,7 @@ npx tsc --noEmit     # type-check without emitting
 npx prisma migrate dev --name <name>   # create and apply a new migration
 npx prisma generate                    # regenerate Prisma Client after schema changes
 npx prisma studio                      # open browser GUI for the SQLite database
+npx prisma db seed                     # seed user and approver accounts
 ```
 
 No test suite exists yet.
@@ -42,7 +43,7 @@ git push
 
 ### Data flow
 
-- **Server pages** (`src/app/**/page.tsx`) query Prisma directly and pass serialised data as props to client components. Pages use `export const dynamic = "force-dynamic"` to prevent caching.
+- **Server pages** (`src/app/(app)/**/page.tsx`) query Prisma directly and pass serialised data as props to client components. Pages use `export const dynamic = "force-dynamic"` to prevent caching. The `(app)` route group applies the Navbar layout and `SessionProvider` to all authenticated pages; the `/login` page lives outside this group.
 - **API routes** (`src/app/api/**`) handle all mutations (upload, PATCH, DELETE, POST). Client components call these via `fetch`.
 - **Database**: SQLite via Prisma 5 (`prisma/dev.db`). Schema in `prisma/schema.prisma`. Singleton client in `src/lib/prisma.ts` (globalThis pattern for dev hot-reload safety).
 - **Uploaded files** are stored on disk in `/uploads/` (gitignored). The filename stored in `Document.filePath` is `${timestamp}-${originalName}`. Files are served back through `/api/files/[filename]`. The file-serving route validates the resolved path stays within the uploads directory to prevent path traversal.
@@ -59,9 +60,23 @@ git push
 - The PATCH route validates that `status` is one of `draft | pending_review | approved | rejected` and rejects unknown values with a 400.
 - Editing in the TipTap editor is locked unless `role === "user"` and `status === "draft"`. Both `pending_review` and `approved` show a locked editor with a status banner.
 
-### Role system
+### Auth system
 
-There is no authentication. Role (`"user"` | `"approver"`) is stored in `localStorage` under the key `docflow-role` and toggled via the navbar. The `useRole()` hook (`src/hooks/use-role.ts`) is the single source of truth. Client components import this hook to gate UI (delete button, comment input, approval panel).
+Auth.js v5 (`next-auth@beta`) with JWT sessions and a Credentials provider (email + password via bcrypt).
+
+**Seed accounts:** `user@docflow.com / user123` and `approver@docflow.com / approver123`. Re-seed with `npx prisma db seed`.
+
+**Session access:**
+- Server components and API routes: `const session = await auth()` from `@/auth` — no request argument needed in Server Components; API route handlers must call it inside the handler function.
+- Client components: `const { data: session } = useSession()` from `next-auth/react` — requires the `SessionProvider` ancestor in `src/app/(app)/layout.tsx`.
+
+**Route protection:** `src/middleware.ts` intercepts all unauthenticated requests. Page routes redirect to `/login`; API routes return `401 JSON`. The `/api/auth/*` paths and Next.js static assets are excluded.
+
+**Role enforcement in API routes:** Every mutation route calls `await auth()` and checks `session.user.role` before proceeding. The role is stored in the JWT (sourced from `User.role` in the database at login time).
+
+**Adding OAuth later:** Import the desired provider from `next-auth/providers/<name>`, add it to the `providers` array in `src/auth.ts`, and add the provider's client ID/secret to `.env`. The JWT/session callbacks and all consumers are already provider-agnostic.
+
+**`useRole()` hook** (`src/hooks/use-role.ts`) is now a thin shim over `useSession()` — all existing consumers continue to call `useRole()` unchanged. The `toggleRole` function has been removed.
 
 ### Key components
 
@@ -69,8 +84,9 @@ There is no authentication. Role (`"user"` | `"approver"`) is stored in `localSt
 |---|---|
 | `DocumentWorkspace` | Main client component for `/documents/[id]`. Single-view layout: full-width inline editor with a toolbar (title, status, Save/Submit actions) and a collapsible right sidebar (Comments, History, Approval tabs). Displays a red error banner on failed API calls. |
 | `RichEditor` | TipTap wrapper — requires `'use client'`. Outputs HTML string via `onChange`. |
-| `useRole` | localStorage-backed hook; always initialises as `"user"` on first render to avoid SSR hydration mismatch. Known lint issue: `setRole` is called inside `useEffect`, triggering `react-hooks/set-state-in-effect`. |
-| `DeleteButton` | Client component rendered in the dashboard list (`src/app/page.tsx`). Visible only when `role === "user"`; calls `DELETE /api/documents/:id`. |
+| `useRole` | Thin shim over `useSession()` — returns `{ role }` sourced from the JWT session. No longer localStorage-backed; the old hydration mismatch and lint issue are gone. |
+| `Navbar` | Shows logged-in user's email, a read-only role badge, and a Logout button. Rendered by `src/app/(app)/layout.tsx` — does not appear on the `/login` page. |
+| `DeleteButton` | Client component rendered in the dashboard list (`src/app/(app)/page.tsx`). Visible only when `role === "user"`; calls `DELETE /api/documents/:id`. |
 | `StatusBadge` | Displays the document status as a coloured badge. Used in both the dashboard list and the `DocumentWorkspace` toolbar. |
 | `UploadButton` | Client component on the dashboard. Opens the upload page (`/documents/upload`). |
 

@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "user") return NextResponse.json({ error: "Forbidden: users only" }, { status: 403 });
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   const title = formData.get("title") as string | null;

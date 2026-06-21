@@ -23,6 +23,15 @@ model Document {
   approvals Approval[]
 }
 
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         String    @default("user")
+  createdAt    DateTime  @default(now())
+  versions     Version[]
+}
+
 model Version {
   id         String   @id @default(cuid())
   documentId String
@@ -30,6 +39,8 @@ model Version {
   content    String
   changeNote String?
   role       String   @default("user")
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id])
   createdAt  DateTime @default(now())
 }
 

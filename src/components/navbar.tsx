@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRole } from "@/hooks/use-role";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 
 export function Navbar() {
-  const { role, toggleRole } = useRole();
+  const { data: session } = useSession();
+  const role = session?.user?.role ?? "user";
+  const email = session?.user?.email ?? "";
 
   return (
     <header className="border-b bg-white shadow-sm">
@@ -17,18 +19,23 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">Viewing as:</span>
-          <button
-            onClick={toggleRole}
-            className={`relative inline-flex h-8 items-center rounded-full px-3 text-sm font-medium transition-colors ${
+          <span className="text-sm text-gray-500">{email}</span>
+          <span
+            className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-medium ${
               role === "approver"
-                ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                ? "bg-purple-100 text-purple-700"
+                : "bg-blue-100 text-blue-700"
             }`}
           >
             {role === "approver" ? "Approver" : "User"}
-          </button>
-          <span className="text-xs text-gray-400">(click to switch)</span>
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+          >
+            Logout
+          </Button>
         </div>
       </div>
     </header>

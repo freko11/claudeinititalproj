@@ -67,7 +67,7 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
     const res = await fetch(`/api/documents/${doc.id}/versions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content, changeNote: changeNote || null, role }),
+      body: JSON.stringify({ content, changeNote: changeNote || null }),
     });
     setSaving(false);
     if (!res.ok) { setError("Failed to save draft. Please try again."); return; }
