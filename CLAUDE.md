@@ -45,7 +45,7 @@ git push
 
 - **Server pages** (`src/app/(app)/**/page.tsx`) query Prisma directly and pass serialised data as props to client components. Pages use `export const dynamic = "force-dynamic"` to prevent caching. The `(app)` route group applies the Navbar layout and `SessionProvider` to all authenticated pages; the `/login` page lives outside this group.
 - **API routes** (`src/app/api/**`) handle all mutations (upload, PATCH, DELETE, POST). Client components call these via `fetch`.
-- **Database**: SQLite via Prisma 5 (`prisma/dev.db`). Schema in `prisma/schema.prisma`. Singleton client in `src/lib/prisma.ts` (globalThis pattern for dev hot-reload safety).
+- **Database**: SQLite via Prisma 5 (`prisma/dev.db`). Schema in `prisma/schema.prisma`. Singleton client in `src/lib/prisma.ts` (globalThis pattern for dev hot-reload safety). Models: `Document`, `Version` (includes `authorId → User` and `role` string written server-side from the session), `Comment`, `Approval`, `User`.
 - **Uploaded files** are stored on disk in `/uploads/` (gitignored). The filename stored in `Document.filePath` is `${timestamp}-${originalName}`. Files are served back through `/api/files/[filename]`. The file-serving route validates the resolved path stays within the uploads directory to prevent path traversal.
 
 ### Document status lifecycle
@@ -64,7 +64,11 @@ git push
 
 Auth.js v5 (`next-auth@beta`) with JWT sessions and a Credentials provider (email + password via bcrypt).
 
-**Seed accounts:** `user@docflow.com / user123` and `approver@docflow.com / approver123`. Re-seed with `npx prisma db seed`.
+**Key files:** `src/auth.ts` (NextAuth config — exports `auth`, `signIn`, `signOut`, `handlers`), `src/types/next-auth.d.ts` (type augmentation for `role` and `id` on `User`/`Session`/`JWT`).
+
+**Required env var:** `NEXTAUTH_SECRET` must be set in `.env` (generate with `openssl rand -base64 32`). The app will fail to sign tokens without it.
+
+**Seed accounts:** `user@docflow.com / user123` and `approver@docflow.com / approver123`. Re-seed with `npx prisma db seed` (`prisma/seed.ts`).
 
 **Session access:**
 - Server components and API routes: `const session = await auth()` from `@/auth` — no request argument needed in Server Components; API route handlers must call it inside the handler function.
