@@ -59,54 +59,63 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
   const [actioning, setActioning] = useState(false);
   const [comments, setComments] = useState<Comment[]>(doc.comments);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const saveDraft = useCallback(async () => {
     setSaving(true);
-    await fetch(`/api/documents/${doc.id}/versions`, {
+    setError(null);
+    const res = await fetch(`/api/documents/${doc.id}/versions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content, changeNote: changeNote || null, role }),
     });
-    setChangeNote("");
     setSaving(false);
+    if (!res.ok) { setError("Failed to save draft. Please try again."); return; }
+    setChangeNote("");
     router.refresh();
   }, [content, changeNote, doc.id, role, router]);
 
   const submitForReview = useCallback(async () => {
     setSubmitting(true);
-    await fetch(`/api/documents/${doc.id}`, {
+    setError(null);
+    const res = await fetch(`/api/documents/${doc.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "pending_review" }),
     });
     setSubmitting(false);
+    if (!res.ok) { setError("Failed to submit for review. Please try again."); return; }
     router.refresh();
   }, [doc.id, router]);
 
   const [recalling, setRecalling] = useState(false);
   const recallForAmendment = useCallback(async () => {
     setRecalling(true);
-    await fetch(`/api/documents/${doc.id}`, {
+    setError(null);
+    const res = await fetch(`/api/documents/${doc.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "draft" }),
     });
     setRecalling(false);
+    if (!res.ok) { setError("Failed to recall document. Please try again."); return; }
     router.refresh();
   }, [doc.id, router]);
 
   const postComment = useCallback(async () => {
     if (!commentBody.trim()) return;
     setPostingComment(true);
+    setError(null);
     const res = await fetch(`/api/documents/${doc.id}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ body: commentBody.trim() }),
     });
+    setPostingComment(false);
+    if (!res.ok) { setError("Failed to post comment. Please try again."); return; }
     const newComment = await res.json();
     setComments((prev) => [...prev, newComment]);
     setCommentBody("");
-    setPostingComment(false);
   }, [commentBody, doc.id]);
 
   const resolveComment = useCallback(async (commentId: string, resolved: boolean) => {
@@ -122,13 +131,15 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
 
   const submitApproval = useCallback(async (status: "approved" | "rejected") => {
     setActioning(true);
-    await fetch(`/api/documents/${doc.id}/approvals`, {
+    setError(null);
+    const res = await fetch(`/api/documents/${doc.id}/approvals`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status, comment: approvalComment || null }),
     });
-    setApprovalComment("");
     setActioning(false);
+    if (!res.ok) { setError("Failed to submit approval. Please try again."); return; }
+    setApprovalComment("");
     router.refresh();
   }, [approvalComment, doc.id, router]);
 
@@ -183,6 +194,12 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
         </div>
 
         {/* Status banners */}
+        {error && (
+          <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-700 font-medium shrink-0 flex items-center justify-between">
+            {error}
+            <button onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
+          </div>
+        )}
         {role === "user" && doc.status === "pending_review" && (
           <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-sm text-yellow-700 font-medium shrink-0">
             This document is under review — editing is locked.

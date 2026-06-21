@@ -45,7 +45,7 @@ git push
 - **Server pages** (`src/app/**/page.tsx`) query Prisma directly and pass serialised data as props to client components. Pages use `export const dynamic = "force-dynamic"` to prevent caching.
 - **API routes** (`src/app/api/**`) handle all mutations (upload, PATCH, DELETE, POST). Client components call these via `fetch`.
 - **Database**: SQLite via Prisma 5 (`prisma/dev.db`). Schema in `prisma/schema.prisma`. Singleton client in `src/lib/prisma.ts` (globalThis pattern for dev hot-reload safety).
-- **Uploaded files** are stored on disk in `/uploads/` (gitignored). The filename stored in `Document.filePath` is `${timestamp}-${originalName}`. Files are served back through `/api/files/[filename]`.
+- **Uploaded files** are stored on disk in `/uploads/` (gitignored). The filename stored in `Document.filePath` is `${timestamp}-${originalName}`. Files are served back through `/api/files/[filename]`. The file-serving route validates the resolved path stays within the uploads directory to prevent path traversal.
 
 ### Document status lifecycle
 
@@ -56,6 +56,7 @@ git push
 - Users submit via `PATCH /api/documents/:id` `{status:"pending_review"}`.
 - Users can recall a document under review via `PATCH /api/documents/:id` `{status:"draft"}`, unlocking it for further edits.
 - Approvers approve/reject via `POST /api/documents/:id/approvals`, which also updates `Document.status`.
+- The PATCH route validates that `status` is one of `draft | pending_review | approved | rejected` and rejects unknown values with a 400.
 - Editing in the TipTap editor is locked unless `role === "user"` and `status === "draft"`. Both `pending_review` and `approved` show a locked editor with a status banner.
 
 ### Role system
@@ -66,9 +67,16 @@ There is no authentication. Role (`"user"` | `"approver"`) is stored in `localSt
 
 | Component | Purpose |
 |---|---|
-| `DocumentWorkspace` | Main client component for `/documents/[id]`. Single-view layout: full-width inline editor with a toolbar (title, status, Save/Submit actions) and a collapsible right sidebar (Comments, History, Approval tabs). |
+| `DocumentWorkspace` | Main client component for `/documents/[id]`. Single-view layout: full-width inline editor with a toolbar (title, status, Save/Submit actions) and a collapsible right sidebar (Comments, History, Approval tabs). Displays a red error banner on failed API calls. |
 | `RichEditor` | TipTap wrapper — requires `'use client'`. Outputs HTML string via `onChange`. |
-| `useRole` | localStorage-backed hook; always initialises as `"user"` on first render to avoid SSR hydration mismatch. |
+| `useRole` | localStorage-backed hook; always initialises as `"user"` on first render to avoid SSR hydration mismatch. Known lint issue: `setRole` is called inside `useEffect`, triggering `react-hooks/set-state-in-effect`. |
+| `DeleteButton` | Client component rendered in the dashboard list (`src/app/page.tsx`). Visible only when `role === "user"`; calls `DELETE /api/documents/:id`. |
+| `StatusBadge` | Displays the document status as a coloured badge. Used in both the dashboard list and the `DocumentWorkspace` toolbar. |
+| `UploadButton` | Client component on the dashboard. Opens the upload page (`/documents/upload`). |
+
+### Comment access
+
+Only **approvers** can post comments. Users can view all comments in the sidebar but the comment input is hidden when `role === "user"`. Both roles can toggle the resolved/unresolved state of a comment.
 
 ### DOCX handling
 

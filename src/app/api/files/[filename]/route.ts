@@ -7,7 +7,11 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
-  const filePath = path.join(process.cwd(), "uploads", filename);
+  const uploadsDir = path.join(process.cwd(), "uploads");
+  const filePath = path.join(uploadsDir, filename);
+  if (!filePath.startsWith(uploadsDir + path.sep)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const file = await readFile(filePath);
