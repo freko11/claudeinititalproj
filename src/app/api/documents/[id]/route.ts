@@ -12,9 +12,9 @@ export async function GET(
   const doc = await prisma.document.findUnique({
     where: { id },
     include: {
-      versions: { orderBy: { createdAt: "desc" } },
-      comments: { orderBy: { createdAt: "asc" } },
-      approvals: { orderBy: { createdAt: "desc" } },
+      versions: { orderBy: { createdAt: "desc" }, include: { author: { select: { email: true } } } },
+      comments: { orderBy: { createdAt: "asc" }, include: { author: { select: { email: true } } } },
+      approvals: { orderBy: { createdAt: "desc" }, include: { author: { select: { email: true } } } },
     },
   });
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });

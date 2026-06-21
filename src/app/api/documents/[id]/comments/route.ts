@@ -14,7 +14,8 @@ export async function POST(
   const { body } = await request.json();
 
   const comment = await prisma.comment.create({
-    data: { documentId: id, body },
+    data: { documentId: id, body, authorId: session.user.id },
+    include: { author: { select: { email: true } } },
   });
 
   return NextResponse.json(comment, { status: 201 });

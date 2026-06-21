@@ -15,6 +15,7 @@ interface Comment {
   body: string;
   resolved: boolean;
   createdAt: string;
+  author: { email: string } | null;
 }
 
 interface Version {
@@ -23,6 +24,7 @@ interface Version {
   changeNote: string | null;
   role: string;
   createdAt: string;
+  author: { email: string } | null;
 }
 
 interface Approval {
@@ -30,6 +32,7 @@ interface Approval {
   status: string;
   comment: string | null;
   createdAt: string;
+  author: { email: string } | null;
 }
 
 interface Document {
@@ -267,6 +270,9 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
                     key={c.id}
                     className={`rounded-lg border p-3 text-sm ${c.resolved ? "bg-gray-50 opacity-60" : "bg-white"}`}
                   >
+                    {c.author && (
+                      <p className="text-xs font-medium text-purple-600 mb-1">{c.author.email}</p>
+                    )}
                     <p className="text-gray-700">{c.body}</p>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs text-gray-400">{new Date(c.createdAt).toLocaleString()}</span>
@@ -310,7 +316,7 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
                     <div className="bg-white border rounded-lg p-3 text-sm">
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-xs font-medium ${v.role === "approver" ? "text-purple-600" : "text-blue-600"}`}>
-                          {v.role === "approver" ? "Approver" : "User"}
+                          {v.author?.email ?? (v.role === "approver" ? "Approver" : "User")}
                         </span>
                         <span className="text-xs text-gray-400">{new Date(v.createdAt).toLocaleString()}</span>
                       </div>
@@ -336,6 +342,9 @@ export function DocumentWorkspace({ doc }: { doc: Document }) {
                             </span>
                             <span className="text-xs text-gray-400">{new Date(a.createdAt).toLocaleString()}</span>
                           </div>
+                          {a.author && (
+                            <p className="text-xs text-gray-500 mb-1">{a.author.email}</p>
+                          )}
                           {a.comment && <p className="text-gray-600">{a.comment}</p>}
                         </div>
                       </li>

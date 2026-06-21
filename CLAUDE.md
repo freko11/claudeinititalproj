@@ -45,7 +45,7 @@ git push
 
 - **Server pages** (`src/app/(app)/**/page.tsx`) query Prisma directly and pass serialised data as props to client components. Pages use `export const dynamic = "force-dynamic"` to prevent caching. The `(app)` route group applies the Navbar layout and `SessionProvider` to all authenticated pages; the `/login` page lives outside this group.
 - **API routes** (`src/app/api/**`) handle all mutations (upload, PATCH, DELETE, POST). Client components call these via `fetch`.
-- **Database**: SQLite via Prisma 5 (`prisma/dev.db`). Schema in `prisma/schema.prisma`. Singleton client in `src/lib/prisma.ts` (globalThis pattern for dev hot-reload safety). Models: `Document`, `Version` (includes `authorId → User` and `role` string written server-side from the session), `Comment`, `Approval`, `User`.
+- **Database**: SQLite via Prisma 5 (`prisma/dev.db`). Schema in `prisma/schema.prisma`. Singleton client in `src/lib/prisma.ts` (globalThis pattern for dev hot-reload safety). Models: `Document`, `Version` (`authorId → User`, `role` written server-side from session), `Comment` (`authorId → User`), `Approval` (`authorId → User`), `User`. All three audit models track who performed the action via `authorId`; the email is surfaced in the History and Comments sidebar tabs.
 - **Uploaded files** are stored on disk in `/uploads/` (gitignored). The filename stored in `Document.filePath` is `${timestamp}-${originalName}`. Files are served back through `/api/files/[filename]`. The file-serving route validates the resolved path stays within the uploads directory to prevent path traversal.
 
 ### Document status lifecycle

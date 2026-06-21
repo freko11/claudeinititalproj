@@ -18,7 +18,8 @@ export async function POST(
   }
 
   const approval = await prisma.approval.create({
-    data: { documentId: id, status, comment },
+    data: { documentId: id, status, comment, authorId: session.user.id },
+    include: { author: { select: { email: true } } },
   });
 
   await prisma.document.update({

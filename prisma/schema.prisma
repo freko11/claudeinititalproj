@@ -24,12 +24,14 @@ model Document {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String     @id @default(cuid())
+  email        String     @unique
   passwordHash String
-  role         String    @default("user")
-  createdAt    DateTime  @default(now())
+  role         String     @default("user")
+  createdAt    DateTime   @default(now())
   versions     Version[]
+  comments     Comment[]
+  approvals    Approval[]
 }
 
 model Version {
@@ -50,6 +52,8 @@ model Comment {
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   body       String
   resolved   Boolean  @default(false)
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id])
   createdAt  DateTime @default(now())
 }
 
@@ -59,5 +63,7 @@ model Approval {
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   status     String
   comment    String?
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id])
   createdAt  DateTime @default(now())
 }
